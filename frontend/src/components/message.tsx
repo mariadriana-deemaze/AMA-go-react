@@ -1,21 +1,41 @@
-import { ArrowUp } from "lucide-react";
 import { useState } from "react";
+import { ArrowUp } from "lucide-react";
+import { createMessageReaction } from "../http/create-message-reaction";
+import { toast } from "sonner";
+import { removeMessageReaction } from "../http/remove-message-reaction";
 
 interface MessageProps {
+  id: string;
   text: string;
   amountOfReactions: number;
   answered?: boolean;
 }
 
 export function Message({
-  text,
-  amountOfReactions,
-  answered = false,
-}: MessageProps) {
+  roomId,
+  message: { id, text, amountOfReactions, answered = false },
+}: {
+  roomId: string;
+  message: MessageProps;
+}) {
   const [hasReacted, setHasReacted] = useState(false);
 
-  function handleReactToMessage() {
-    setHasReacted(true);
+  async function addReaction() {
+    try {
+      await createMessageReaction({ roomId, messageId: id });
+      setHasReacted(true);
+    } catch (error) {
+      toast.error("Error on liking message. Try again.");
+    }
+  }
+
+  async function removeReaction() {
+    try {
+      await removeMessageReaction({ roomId, messageId: id });
+      setHasReacted(false);
+    } catch (error) {
+      toast.error("Error on liking message. Try again.");
+    }
   }
 
   return (
@@ -25,7 +45,7 @@ export function Message({
     >
       {text}
       <button
-        onClick={hasReacted ? () => {} : handleReactToMessage}
+        onClick={hasReacted ? removeReaction : addReaction}
         type="button"
         className={`mt-3 flex items-center gap-2 text-sm font-medium ${
           hasReacted
